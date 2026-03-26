@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>I.E. Apóstol San Pedro - Sistema Académico</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<header class="header">
+    <div class="container header-content">
+        <div class="logo-box">
+            <img src="{{ url_for('static', filename='assets/logo.jpeg') }}">
+            <div>
+                <h1>I.E. Apóstol San Pedro</h1>
+                <span>Sistema de Gestión Académica</span>
+            </div>
+        </div>
+
+        <a href="/login" class="btn-login">Ingresar</a>
+    </div>
+</header>
+
+<section class="hero">
+    <div class="container hero-content">
+        <div class="hero-text">
+            <h2>Gestiona las calificaciones de forma inteligente</h2>
+            <p>
+                Control total, acceso inmediato y comunicación eficiente entre docentes,
+                estudiantes y padres.
+            </p>
+
+            <a href="/login" class="btn-main">Ingresar al sistema</a>
+        </div>
+    </div>
+</section>
+
+<section class="features container">
+    <div class="card">
+        <h3>📊 Registro eficiente</h3>
+        <p>Ingreso de notas rápido y sin errores.</p>
+    </div>
+
+    <div class="card">
+        <h3>⚡ Acceso inmediato</h3>
+        <p>Consulta de calificaciones en tiempo real.</p>
+    </div>
+
+    <div class="card">
+        <h3>📢 Comunicación clara</h3>
+        <p>Información accesible para toda la comunidad.</p>
+    </div>
+</section>
+
+<footer>
+    <p>© 2026 SIGA - I.E. Apóstol San Pedro</p>
+</footer>
+
+</body>
+</html>

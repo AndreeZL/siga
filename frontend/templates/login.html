@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Login - SIGA</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="login-body">
+
+<div class="login-wrapper">
+
+    <!-- LADO IZQUIERDO (branding) -->
+    <div class="login-left">
+        <img src="{{ url_for('static', filename='assets/buho.jpeg') }}" class="login-mascota">
+        <h1>Bienvenido a SIGA</h1>
+        <p>Sistema de Gestión Académica</p>
+    </div>
+
+    <!-- LADO DERECHO (formulario) -->
+    <div class="login-container">
+        <h2>Iniciar Sesión</h2>
+
+        <form method="POST" action="/login">
+            <div class="input-group">
+                <input type="text" name="username" required>
+                <label>Usuario</label>
+            </div>
+
+            <div class="input-group">
+                <input type="password" name="password" required>
+                <label>Contraseña</label>
+            </div>
+
+            <div class="btn-group">
+                <button type="submit" class="btn-ingresar">Ingresar</button>
+                <button type="button" class="btn-salir" onclick="window.location.href='/'">
+                    Salir
+                </button>
+            </div>
+        </form>
+
+        <p class="footer-text">© 2026 I.E. Apóstol San Pedro</p>
+    </div>
+
+</div>
+
+</body>
+</html>

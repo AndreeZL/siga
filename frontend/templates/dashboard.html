@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+</head>
+<body>
+
+<h1>Bienvenido al Sistema</h1>
+
+{% if rol == "estudiante" %}
+    <h2>Vista Estudiante</h2>
+    <p>Aquí verás tus notas</p>
+{% elif rol == "docente" %}
+    <h2>Vista Docente</h2>
+    <p>Aquí podrás registrar notas</p>
+{% endif %}
+
+</body>
+</html>
