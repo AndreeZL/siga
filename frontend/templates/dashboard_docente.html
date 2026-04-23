@@ -41,45 +41,121 @@
 </div>
 
 <script>
-function cargarEstudiantes(grado_id, elemento) {
-
-    document.querySelectorAll(".curso-item").forEach(e => {
-        e.classList.remove("active");
-    });
-
-    elemento.classList.add("active");
-
-    fetch(`/docente/curso/${grado_id}`)
+    function cargarEstudiantes(grado_id, elemento) {
+    
+        document.querySelectorAll(".curso-item").forEach(e => {
+            e.classList.remove("active");
+        });
+    
+        elemento.classList.add("active");
+    
+        fetch(`/docente/curso/${grado_id}`)
+            .then(res => res.json())
+            .then(data => {
+    
+                const box = document.getElementById("estudiantes-box");
+    
+                if (!data.estudiantes.length) {
+                    box.innerHTML = "<p>No hay estudiantes</p>";
+                    return;
+                }
+    
+                let html = `
+                    <table class="tabla-estudiantes">
+                        <tr>
+                            <th>Estudiante</th>
+                            <th>B1</th>
+                            <th>B2</th>
+                            <th>B3</th>
+                            <th>B4</th>
+                            <th>Acción</th>
+                        </tr>
+                `;
+    
+                data.estudiantes.forEach(e => {
+    
+                    html += `
+                        <tr>
+                            <td>${e[1]} ${e[2]}</td>
+    
+                            <td><input type="number" min="0" max="20" value="${e[4]}" id="b1-${e[0]}"></td>
+                            <td><input type="number" min="0" max="20" value="${e[5]}" id="b2-${e[0]}"></td>
+                            <td><input type="number" min="0" max="20" value="${e[6]}" id="b3-${e[0]}"></td>
+                            <td><input type="number" min="0" max="20" value="${e[7]}" id="b4-${e[0]}"></td>
+    
+                            <td>
+                                <button onclick="guardarNotas(${e[0]}, ${grado_id})">
+                                    Guardar
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+    
+                html += "</table>";
+    
+                box.innerHTML = html;
+            });
+    }
+    
+    function guardarNotas(estudiante_id, grado_id) {
+    
+        const b1 = document.getElementById(`b1-${estudiante_id}`).value;
+        const b2 = document.getElementById(`b2-${estudiante_id}`).value;
+        const b3 = document.getElementById(`b3-${estudiante_id}`).value;
+        const b4 = document.getElementById(`b4-${estudiante_id}`).value;
+    
+        fetch("/docente/guardar_notas", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                estudiante_id,
+                grado_id,
+                b1, b2, b3, b4
+            })
+        })
         .then(res => res.json())
         .then(data => {
-
-            const box = document.getElementById("estudiantes-box");
-
-            if (!data.estudiantes.length) {
-                box.innerHTML = "<p>No hay estudiantes</p>";
-                return;
+            if (data.ok) {
+                mostrarAlerta(data.message, "success");
+            } else {
+                mostrarAlerta(data.message || "Error", "error");
             }
-
-            let html = `
-                <table class="tabla-estudiantes">
-                    <tr>
-                        <th>Nombre</th>
-                    </tr>
-            `;
-
-            data.estudiantes.forEach(e => {
-                html += `
-                    <tr>
-                        <td>${e[0]} ${e[1]}</td>
-                    </tr>
-                `;
-            });
-
-            html += "</table>";
-
-            box.innerHTML = html;
         });
-}
+    }
+
+    function mostrarAlerta(mensaje, tipo) {
+
+        const color = tipo === "success" ? "#22c55e" : "#ef4444";
+
+        const div = document.createElement("div");
+        div.innerText = mensaje;
+
+        div.style.position = "fixed";
+        div.style.top = "20px";
+        div.style.right = "20px";
+        div.style.padding = "12px 20px";
+        div.style.background = color;
+        div.style.color = "white";
+        div.style.borderRadius = "10px";
+        div.style.boxShadow = "0 10px 25px rgba(0,0,0,0.2)";
+        div.style.zIndex = "9999";
+        div.style.fontWeight = "bold";
+        div.style.transition = "0.3s";
+
+        document.body.appendChild(div);
+
+        setTimeout(() => {
+            div.style.opacity = "0";
+            div.style.transform = "translateY(-10px)";
+        }, 1500);
+
+        setTimeout(() => {
+            div.remove();
+        }, 2000);
+    }
 </script>
 
 </body>

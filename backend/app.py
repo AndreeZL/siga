@@ -81,6 +81,21 @@ def crear_tablas():
         );
     """)
 
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS notas_bimestrales (
+            id SERIAL PRIMARY KEY,
+            estudiante_id INTEGER REFERENCES estudiantes(id) ON DELETE CASCADE,
+            grado_id INTEGER REFERENCES grados(id) ON DELETE CASCADE,
+
+            b1 INTEGER CHECK (b1 BETWEEN 0 AND 20),
+            b2 INTEGER CHECK (b2 BETWEEN 0 AND 20),
+            b3 INTEGER CHECK (b3 BETWEEN 0 AND 20),
+            b4 INTEGER CHECK (b4 BETWEEN 0 AND 20),
+
+            UNIQUE(estudiante_id, grado_id)
+        );
+    """)
+
     conn.commit()
     cur.close()
     conn.close()
@@ -222,6 +237,7 @@ def dashboard_docente():
 
 @app.route("/docente/curso/<int:grado_id>")
 def ver_estudiantes(grado_id):
+
     if session.get("rol") != "docente":
         return redirect(url_for("login"))
 
@@ -229,9 +245,19 @@ def ver_estudiantes(grado_id):
     cur = conn.cursor()
 
     cur.execute("""
-        SELECT u.nombres, u.apellidos, u.dni
+        SELECT 
+            e.id,
+            u.nombres,
+            u.apellidos,
+            u.dni,
+            COALESCE(n.b1, 0),
+            COALESCE(n.b2, 0),
+            COALESCE(n.b3, 0),
+            COALESCE(n.b4, 0)
         FROM estudiantes e
         JOIN usuarios u ON e.usuario_id = u.id
+        LEFT JOIN notas_bimestrales n 
+            ON n.estudiante_id = e.id AND n.grado_id = e.grado_id
         WHERE e.grado_id = %s
     """, (grado_id,))
 
@@ -241,6 +267,47 @@ def ver_estudiantes(grado_id):
     conn.close()
 
     return jsonify({"estudiantes": estudiantes})
+
+@app.route("/docente/guardar_notas", methods=["POST"])
+def guardar_notas():
+
+    data = request.json
+
+    estudiante_id = data["estudiante_id"]
+    grado_id = data["grado_id"]
+
+    b1 = int(data["b1"])
+    b2 = int(data["b2"])
+    b3 = int(data["b3"])
+    b4 = int(data["b4"])
+
+    # validación rápida
+    for n in [b1, b2, b3, b4]:
+        if n < 0 or n > 20:
+            return {"error": "Notas inválidas"}, 400
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        INSERT INTO notas_bimestrales (estudiante_id, grado_id, b1, b2, b3, b4)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        ON CONFLICT (estudiante_id, grado_id)
+        DO UPDATE SET 
+            b1 = EXCLUDED.b1,
+            b2 = EXCLUDED.b2,
+            b3 = EXCLUDED.b3,
+            b4 = EXCLUDED.b4;
+    """, (estudiante_id, grado_id, b1, b2, b3, b4))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return jsonify({
+        "ok": True,
+        "message": "Notas guardadas exitosamente"
+    })
 
 
 @app.route("/dashboard/admin")
