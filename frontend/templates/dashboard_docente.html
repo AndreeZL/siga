@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Docente - SIGA</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<header class="header">
+    <div class="container header-content">
+        <h1>Panel Docente</h1>
+        <a href="/logout" class="btn-login">Cerrar sesión</a>
+    </div>
+</header>
+
+<div class="container dashboard-docente">
+
+    <!-- CURSOS -->
+    <div class="sidebar-cursos">
+        <h2>Mis cursos</h2>
+
+        {% for c in cursos %}
+            <div class="curso-item"
+                 onclick="cargarEstudiantes('{{ c[3] }}', this)">
+                📘 {{ c[1] }} - {{ c[2] }}
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- ESTUDIANTES -->
+    <div class="panel-estudiantes">
+        <h2>Estudiantes</h2>
+
+        <div id="estudiantes-box">
+            <p>Selecciona un curso para ver estudiantes</p>
+        </div>
+    </div>
+
+</div>
+
+<script>
+function cargarEstudiantes(grado_id, elemento) {
+
+    document.querySelectorAll(".curso-item").forEach(e => {
+        e.classList.remove("active");
+    });
+
+    elemento.classList.add("active");
+
+    fetch(`/docente/curso/${grado_id}`)
+        .then(res => res.json())
+        .then(data => {
+
+            const box = document.getElementById("estudiantes-box");
+
+            if (!data.estudiantes.length) {
+                box.innerHTML = "<p>No hay estudiantes</p>";
+                return;
+            }
+
+            let html = `
+                <table class="tabla-estudiantes">
+                    <tr>
+                        <th>Nombre</th>
+                    </tr>
+            `;
+
+            data.estudiantes.forEach(e => {
+                html += `
+                    <tr>
+                        <td>${e[0]} ${e[1]}</td>
+                    </tr>
+                `;
+            });
+
+            html += "</table>";
+
+            box.innerHTML = html;
+        });
+}
+</script>
+
+</body>
+</html>

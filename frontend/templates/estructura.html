@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Estructura SIGA</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            background: #f4f6f8;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .title {
+            font-size: 20px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .area {
+            margin-bottom: 15px;
+        }
+
+        .subarea {
+            margin-left: 20px;
+            color: #555;
+        }
+
+        .grado {
+            padding: 5px 0;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- ================= AREAS ================= -->
+    <div class="card">
+        <div class="title">Áreas y Subáreas</div>
+
+        {% for area, subarea in areas %}
+            <div class="area">
+                <strong>{{ area }}</strong>
+
+                {% if subarea %}
+                    <div class="subarea">- {{ subarea }}</div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- ================= GRADOS ================= -->
+    <div class="card">
+        <div class="title">Grados y Subáreas asignadas</div>
+
+        {% for grado, subarea in grados %}
+            <div class="grado">
+                <strong>{{ grado }}</strong> → {{ subarea }}
+            </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin - SIGA</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <header class="header">
+        <div class="container header-content">
+
+            <div class="logo-box">
+                <h1>Panel Administrador</h1>
+                <span>Gestión de usuarios</span>
+            </div>
+        
+            <div class="header-actions">
+        
+                <!-- ESTRUCTURA -->
+                <div class="estructura-box">
+                    <button onclick="toggleMenu()">➕ Añadir estructura</button>
+                    <button onclick="toggleDocenteMenu()">👨‍🏫 Ordenar docente</button>
+        
+                    <div id="menu" class="estructura-menu">
+                        <button onclick="mostrarForm('area')">Crear Área</button>
+                        <button onclick="mostrarForm('subarea')">Crear Subárea</button>
+                        <button onclick="mostrarForm('relacion')">Área - Subárea - Grado</button>
+                        <button onclick="mostrarEstructura()">Ver Estructura</button>
+                    </div>
+
+                    <div id="menu-docente" class="estructura-menu" style="display:none;">
+                        <button onclick="mostrarFormDocente()">Asignar docente</button>
+                    </div>
+                </div>
+        
+                <!-- CERRAR SESIÓN -->
+                <a href="/logout" class="btn-login">Cerrar sesión</a>
+        
+            </div>
+        
+        </div>
+    </header>
+
+    <!-- ================= MODAL OVERLAY ================= -->
+    <div id="overlay" class="overlay" style="display:none;">
+
+        <div class="modal">
+
+            <!-- CREAR ÁREA -->
+            <div id="form-area" class="modal-form" style="display:none;">
+                <h3>Crear Área</h3>
+                <form action="/admin/area/crear" method="POST">
+                    <input type="text" name="nombre" placeholder="Nombre del área" required>
+                    <button type="submit">Guardar</button>
+                    <button type="button" onclick="cerrarModal()">Cancelar</button>
+                </form>
+            </div>
+
+            <!-- CREAR SUBÁREA -->
+            <div id="form-subarea" class="modal-form" style="display:none;">
+                <h3>Crear Subárea</h3>
+                <form action="/admin/subarea/crear" method="POST">
+
+                    <input type="text" name="nombre" placeholder="Nombre subárea" required>
+
+                    <select name="area_id" required>
+                        <option value="">Seleccionar área</option>
+                        {% for a in areas %}
+                            <option value="{{ a[0] }}">{{ a[1] }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <button type="submit">Guardar</button>
+                    <button type="button" onclick="cerrarModal()">Cancelar</button>
+                </form>
+            </div>
+
+            <!-- RELACIÓN -->
+            <div id="form-relacion" class="modal-form" style="display:none;">
+                <h3>Asignar Subárea a Grado</h3>
+
+                <form action="/admin/grado-subarea/crear" method="POST">
+
+                    <select name="grado_id" required>
+                        <option value="">Seleccionar grado</option>
+                        {% for g in grados %}
+                            <option value="{{ g[0] }}">{{ g[2] }} - {{ g[1] }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <select name="subarea_id" required>
+                        <option value="">Seleccionar subárea</option>
+                        {% for s in subareas %}
+                            <option value="{{ s[0] }}">{{ s[1] }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <button type="submit">Guardar</button>
+                    <button type="button" onclick="cerrarModal()">Cancelar</button>
+                </form>
+            </div>
+
+            <!-- ASIGNAR DOCENTE -->
+            <div id="form-docente" class="modal-form" style="display:none;">
+                <h3>Asignar Docente a Curso</h3>
+
+                <form action="/admin/docente-curso/asignar" method="POST">
+
+                    <select name="usuario_id" required>
+                        <option value="">Seleccionar docente</option>
+                        {% for u in usuarios %}
+                            {% if u[4] == 'docente' %}
+                                <option value="{{ u[0] }}">
+                                    {{ u[2] }} {{ u[3] }}
+                                </option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+
+                    <!-- 🔥 ESTE ES EL "CURSO" REAL -->
+                    <select name="grado_subarea_id" required>
+                        <option value="">Seleccionar curso (grado - subárea)</option>
+                        {% for gs in grado_subareas %}
+                            <option value="{{ gs[0] }}">
+                                {{ gs[1] }} - {{ gs[2] }}
+                            </option>
+                        {% endfor %}
+                    </select>
+
+                    <button type="submit">Guardar</button>
+                    <button type="button" onclick="cerrarModal()">Cancelar</button>
+
+                </form>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="container dashboard">
+
+        <!-- CREAR USUARIO -->
+        <h2 class="section-title">Crear Usuario</h2>
+
+        <form action="/crear_usuario" method="POST" class="form-card">
+            <input type="text" name="dni" placeholder="DNI" required>
+            <input type="text" name="nombres" placeholder="Nombres" required>
+            <input type="text" name="apellidos" placeholder="Apellidos" required>
+            <input type="text" name="telefono" placeholder="Teléfono" required>
+            <input type="email" name="correo" placeholder="Correo">
+            <input type="password" name="password" placeholder="Contraseña" required>
+
+            <select name="rol" id="rol" required>
+                <option value="">Seleccionar rol</option>
+                <option value="estudiante">Estudiante</option>
+                <option value="docente">Docente</option>
+            </select>
+        
+            <select name="grado_id" id="grado_select">
+                <option value="">Seleccionar grado</option>
+                {% for g in grados %}
+                    <option value="{{ g[0] }}">{{ g[2] }} - {{ g[1] }}</option>
+                {% endfor %}
+            </select>
+
+            <button type="submit">Crear Usuario</button>
+        </form>
+
+        <!-- TABLA -->
+        <h2 class="section-title">Usuarios Registrados</h2>
+
+        <div class="table-card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>DNI</th>
+                        <th>Nombre</th>
+                        <th>Rol</th>
+                        <th>Grado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for u in usuarios %}
+                    <tr>
+                        <td>{{ u[1] }}</td> 
+                        <td>{{ u[2] }} {{ u[3] }}</td> 
+                        <td>{{ u[4] }}</td> 
+
+                        <td>
+                            {% if u[4] == 'estudiante' %}
+                            <form action="/cambiar_grado" method="POST" class="inline-form">
+                                <input type="hidden" name="dni" value="{{ u[0] }}">
+                    
+                                <select name="grado_id" id="grado_{{ loop.index }}" disabled>
+                                    {% for g in grados %}
+                                        <option value="{{ g[0] }}"
+                                            {% if u[5] == g[2] %}selected{% endif %}>
+                                            {{ g[2] }} - {{ g[1] }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                    
+                                <button type="button"
+                                        id="btn_editar_{{ loop.index }}"
+                                        onclick="habilitarGrado('{{ loop.index }}')"
+                                        class="btn-update">
+                                    Editar
+                                </button>
+
+                                <button type="submit"
+                                        id="btn_guardar_{{ loop.index }}"
+                                        class="btn-update"
+                                        style="display:none;">
+                                    Guardar
+                                </button>
+
+                                <button type="button"
+                                        id="btn_cancelar_{{ loop.index }}"
+                                        onclick="cancelarEdicion('{{ loop.index }}')"
+                                        class="btn-danger"
+                                        style="display:none;">
+                                    Cancelar
+                                </button>
+                            </form>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            <div class="acciones">
+
+                                <a href="/eliminar_usuario/{{ u[0] }}" class="btn-danger">
+                                    Eliminar
+                                </a>
+
+                                <div class="fila-acciones">
+
+                                    <form action="/cambiar_password" method="POST" class="inline-form">
+                                        <input type="hidden" name="dni" value="{{ u[0] }}">
+                                        <input type="password" name="password" placeholder="Nueva" required>
+                                        <button class="btn-update">Cambiar</button>
+                                    </form>
+
+                                </div>
+
+                            </div>
+                        </td>
+
+                    </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+        </div>
+
+        <!-- ================= VISTA ESTRUCTURA ================= -->
+        <div id="overlay-estructura" class="overlay" style="display:none;">
+            <div class="modal estructura-modal">
+
+                <h2>📊 Estructura del Sistema</h2>
+
+                <h3>Áreas</h3>
+
+                {% for a in areas %}
+                    <div class="area-item">
+                        <span>{{ a[1] }}</span>
+
+                        <form action="/admin/area/eliminar/{{ a[0] }}" method="POST" style="display:inline;">
+                            <button type="submit"
+                                    class="btn-danger"
+                                    onclick="return confirm('¿Seguro que quieres eliminar esta área?')">
+                                Eliminar
+                            </button>
+                        </form>
+                    </div>
+                {% endfor %}
+
+                <h3>Áreas y Subáreas</h3>
+
+                {% for area, subarea in estructura_areas %}
+                    <p>
+                        <strong>{{ area }}</strong>
+                        {% if subarea %}
+                            → {{ subarea }}
+                        {% endif %}
+                    </p>
+                {% endfor %}
+
+                <hr>
+
+                <h3>Grados y Subáreas asignadas</h3>
+
+                {% for grado, area, subarea in estructura_grados %}
+                    <p>
+                        <strong>{{ grado }}</strong> → {{ area }} → {{ subarea }}
+                    </p>
+                {% endfor %}
+
+                <br>
+
+                <button onclick="cerrarEstructura()">Cerrar</button>
+
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const rolSelect = document.getElementById("rol");
+        const gradoSelect = document.getElementById("grado_select");
+
+        function toggleGrado() {
+            if (rolSelect.value === "estudiante") {
+                gradoSelect.style.display = "block";
+            } else {
+                gradoSelect.style.display = "none";
+                gradoSelect.value = "";
+            }
+        }
+
+        function habilitarGrado(index) {
+            const select = document.getElementById("grado_" + index);
+            const btnEditar = document.getElementById("btn_editar_" + index);
+            const btnGuardar = document.getElementById("btn_guardar_" + index);
+            const btnCancelar = document.getElementById("btn_cancelar_" + index);
+
+            select.dataset.original = select.value;
+
+            select.disabled = false;
+
+            btnEditar.style.display = "none";
+            btnGuardar.style.display = "inline-block";
+            btnCancelar.style.display = "inline-block";
+        }
+
+        function cancelarEdicion(index) {
+            const select = document.getElementById("grado_" + index);
+            const btnEditar = document.getElementById("btn_editar_" + index);
+            const btnGuardar = document.getElementById("btn_guardar_" + index);
+            const btnCancelar = document.getElementById("btn_cancelar_" + index);
+
+            select.value = select.dataset.original;
+
+            select.disabled = true;
+
+            btnEditar.style.display = "inline-block";
+            btnGuardar.style.display = "none";
+            btnCancelar.style.display = "none";
+        }
+
+        function cerrarModal() {
+            document.getElementById("overlay").style.display = "none";
+        }
+
+        function cerrarFlash() {
+            const flash = document.getElementById("flash-overlay");
+            if (flash) {
+                flash.style.display = "none";
+            }
+        }
+
+        rolSelect.addEventListener("change", toggleGrado);
+
+        function toggleMenu() {
+            const menu = document.getElementById("menu");
+            menu.style.display = menu.style.display === "block" ? "none" : "block";
+        }
+
+        function mostrarForm(tipo) {
+            document.getElementById("overlay").style.display = "flex";
+
+            document.getElementById("form-area").style.display = "none";
+            document.getElementById("form-subarea").style.display = "none";
+            document.getElementById("form-relacion").style.display = "none";
+
+            document.getElementById("form-" + tipo).style.display = "block";
+        }
+
+        function mostrarEstructura() {
+            document.getElementById("overlay-estructura").style.display = "flex";
+        }
+
+        function cerrarEstructura() {
+            document.getElementById("overlay-estructura").style.display = "none";
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const flash = document.getElementById("flash-overlay");
+            if (flash) {
+                flash.style.display = "flex";
+            }
+        });
+
+        function toggleDocenteMenu() {
+            const menu = document.getElementById("menu-docente");
+            menu.style.display = menu.style.display === "block" ? "none" : "block";
+        }
+
+        function mostrarFormDocente() {
+            document.getElementById("overlay").style.display = "flex";
+
+            document.getElementById("form-area").style.display = "none";
+            document.getElementById("form-subarea").style.display = "none";
+            document.getElementById("form-relacion").style.display = "none";
+
+            document.getElementById("form-docente").style.display = "block";
+        }
+
+        toggleGrado();
+    </script>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div id="flash-overlay" class="overlay" style="display:flex;">
+                <div class="modal">
+                    {% for category, message in messages %}
+                        <p>{{ message }}</p>
+                    {% endfor %}
+                    <button type="button" onclick="cerrarFlash()">OK</button>
+                </div>
+            </div>
+        {% endif %}
+    {% endwith %}
+
+</body>
+</html>
