@@ -86,13 +86,14 @@ def crear_tablas():
             id SERIAL PRIMARY KEY,
             estudiante_id INTEGER REFERENCES estudiantes(id) ON DELETE CASCADE,
             grado_id INTEGER REFERENCES grados(id) ON DELETE CASCADE,
+            subarea_id INTEGER REFERENCES subareas(id) ON DELETE CASCADE,
 
             b1 INTEGER CHECK (b1 BETWEEN 0 AND 20),
             b2 INTEGER CHECK (b2 BETWEEN 0 AND 20),
             b3 INTEGER CHECK (b3 BETWEEN 0 AND 20),
             b4 INTEGER CHECK (b4 BETWEEN 0 AND 20),
 
-            UNIQUE(estudiante_id, grado_id)
+            UNIQUE(estudiante_id, grado_id, subarea_id)
         );
     """)
 
@@ -146,9 +147,7 @@ def borrar_tabla():
     conn = get_db_connection()
     cur = conn.cursor()
 
-    cur.execute("DROP TABLE IF EXISTS grado_subareas CASCADE;")
-    cur.execute("DROP TABLE IF EXISTS subareas CASCADE;")
-    cur.execute("DROP TABLE IF EXISTS areas CASCADE;")
+    cur.execute("DROP TABLE IF EXISTS notas_bimestrales;")
 
     conn.commit()
     cur.close()
@@ -158,7 +157,7 @@ app = Flask(__name__,
             template_folder="../frontend/templates",
             static_folder="../frontend/static")
 
-app.secret_key = "clave_secreta"
+app.secret_key = os.environ.get("SECRET_KEY", "dev_key")
 
 # Landing
 @app.route("/")
@@ -222,7 +221,7 @@ def dashboard_docente():
     cur = conn.cursor()
 
     cur.execute("""
-        SELECT dgs.id, g.nombre, s.nombre, g.id
+        SELECT dgs.id, g.nombre, s.nombre, g.id, s.id
         FROM docente_grado_subarea dgs
         JOIN grado_subareas gs ON dgs.grado_subarea_id = gs.id
         JOIN grados g ON gs.grado_id = g.id
@@ -237,8 +236,8 @@ def dashboard_docente():
 
     return render_template("dashboard_docente.html", cursos=cursos)
 
-@app.route("/docente/curso/<int:grado_id>")
-def ver_estudiantes(grado_id):
+@app.route("/docente/curso/<int:grado_id>/<int:subarea_id>")
+def ver_estudiantes(grado_id, subarea_id):
 
     if session.get("rol") != "docente":
         return redirect(url_for("login"))
@@ -259,9 +258,11 @@ def ver_estudiantes(grado_id):
         FROM estudiantes e
         JOIN usuarios u ON e.usuario_id = u.id
         LEFT JOIN notas_bimestrales n 
-            ON n.estudiante_id = e.id AND n.grado_id = e.grado_id
+            ON n.estudiante_id = e.id 
+            AND n.grado_id = %s
+            AND n.subarea_id = %s
         WHERE e.grado_id = %s
-    """, (grado_id,))
+    """, (grado_id, subarea_id, grado_id))
 
     estudiantes = cur.fetchall()
 
@@ -291,16 +292,19 @@ def guardar_notas():
     conn = get_db_connection()
     cur = conn.cursor()
 
+    subarea_id = data["subarea_id"]
+
     cur.execute("""
-        INSERT INTO notas_bimestrales (estudiante_id, grado_id, b1, b2, b3, b4)
-        VALUES (%s, %s, %s, %s, %s, %s)
-        ON CONFLICT (estudiante_id, grado_id)
+        INSERT INTO notas_bimestrales 
+        (estudiante_id, grado_id, subarea_id, b1, b2, b3, b4)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        ON CONFLICT (estudiante_id, grado_id, subarea_id)
         DO UPDATE SET 
             b1 = EXCLUDED.b1,
             b2 = EXCLUDED.b2,
             b3 = EXCLUDED.b3,
             b4 = EXCLUDED.b4;
-    """, (estudiante_id, grado_id, b1, b2, b3, b4))
+    """, (estudiante_id, grado_id, subarea_id, b1, b2, b3, b4))
 
     conn.commit()
     cur.close()
