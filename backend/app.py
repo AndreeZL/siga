@@ -670,39 +670,6 @@ def asignar_docente_curso():
     flash("Docente asignado correctamente")
     return redirect(url_for("dashboard_admin"))
 
-def migrar_db():
-    conn = get_db_connection()
-    cur = conn.cursor()
-
-    # agregar columnas si no existen
-    cur.execute("""
-        ALTER TABLE notas_bimestrales
-        ADD COLUMN IF NOT EXISTS b1 INTEGER CHECK (b1 BETWEEN 0 AND 20),
-        ADD COLUMN IF NOT EXISTS b2 INTEGER CHECK (b2 BETWEEN 0 AND 20),
-        ADD COLUMN IF NOT EXISTS b3 INTEGER CHECK (b3 BETWEEN 0 AND 20),
-        ADD COLUMN IF NOT EXISTS b4 INTEGER CHECK (b4 BETWEEN 0 AND 20);
-    """)
-
-    # asegurar relación única
-    cur.execute("""
-        DO $$
-        BEGIN
-            IF NOT EXISTS (
-                SELECT 1 FROM pg_constraint 
-                WHERE conname = 'notas_bimestrales_estudiante_grado_key'
-            ) THEN
-                ALTER TABLE notas_bimestrales
-                ADD CONSTRAINT notas_bimestrales_estudiante_grado_key
-                UNIQUE (estudiante_id, grado_id);
-            END IF;
-        END $$;
-    """)
-
-    conn.commit()
-    cur.close()
-    conn.close()
-
 if __name__ == "__main__":
     crear_tablas()
-    migrar_db()
     app.run(debug=True)
