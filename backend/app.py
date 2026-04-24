@@ -207,8 +207,51 @@ def login():
 def dashboard_estudiante():
     if session.get("rol") != "estudiante":
         return redirect(url_for("login"))
-    return render_template("dashboard_estudiante.html")
 
+    user_id = session.get("user_id")
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT 
+            s.nombre,
+            COALESCE(n.b1, 0),
+            COALESCE(n.b2, 0),
+            COALESCE(n.b3, 0),
+            COALESCE(n.b4, 0)
+        FROM estudiantes e
+        JOIN grado_subareas gs ON e.grado_id = gs.grado_id
+        JOIN subareas s ON gs.subarea_id = s.id
+
+        LEFT JOIN notas_bimestrales n
+            ON n.estudiante_id = e.id
+            AND n.subarea_id = s.id
+            AND n.grado_id = e.grado_id
+
+        WHERE e.usuario_id = %s
+        ORDER BY s.nombre;
+    """, (user_id,))
+
+    cursos = cur.fetchall()
+
+    cur.execute("""
+        SELECT g.nombre
+        FROM estudiantes e
+        JOIN grados g ON e.grado_id = g.id
+        WHERE e.usuario_id = %s
+    """, (user_id,))
+
+    grado = cur.fetchone()
+
+    cur.close()
+    conn.close()
+
+    return render_template(
+            "dashboard_estudiante.html",
+            cursos=cursos,
+            grado=grado
+        )
 
 @app.route("/dashboard/docente")
 def dashboard_docente():

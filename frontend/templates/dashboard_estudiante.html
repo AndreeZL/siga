@@ -1,3 +1,74 @@
-<h1>Panel Estudiante</h1>
-<p>Aquí verás tus notas</p>
-<a href="/">Cerrar sesión</a>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Estudiante - SIGA</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<header class="header">
+    <div class="container header-content">
+
+        <div>
+            <h1>Mis Notas</h1>
+            <span class="grado-text">
+                {{ grado[0] if grado else "Sin grado" }}
+            </span>
+        </div>
+
+        <div class="header-actions">
+            <a href="/logout" class="btn-login">Cerrar sesión</a>
+        </div>
+
+    </div>
+</header>
+
+<div class="container">
+
+    <div class="table-card">
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Curso</th>
+                    <th>B1</th>
+                    <th>B2</th>
+                    <th>B3</th>
+                    <th>B4</th>
+                    <th>Promedio</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for c in cursos %}
+                <tr>
+                    <td>{{ c[0] }}</td>
+                    <td>{{ c[1] }}</td>
+                    <td>{{ c[2] }}</td>
+                    <td>{{ c[3] }}</td>
+                    <td>{{ c[4] }}</td>
+                    <td class="promedio 
+                        {% set promedio = (c[1] + c[2] + c[3] + c[4]) / 4 %}
+                        {% if promedio >= 14 %}
+                            aprobado
+                        {% elif promedio >= 11 %}
+                            regular
+                        {% else %}
+                            desaprobado
+                        {% endif %}
+                    ">
+                        {{ promedio | round(2) }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    </div>
+
+</div>
+
+</body>
+</html>
