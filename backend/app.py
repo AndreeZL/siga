@@ -6,7 +6,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import psycopg2
 import os
 
-DATABASE_URL = "postgresql://siga_db_7z0t_user:NH8B1E73udkZPVbO23uAu2c8YaSXvkGo@dpg-d7jq95d7vvec73dpq4dg-a.oregon-postgres.render.com/siga_db_7z0t"
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
 def get_db_connection():
     return psycopg2.connect(DATABASE_URL)
@@ -153,9 +153,13 @@ def borrar_tabla():
     cur.close()
     conn.close()
 
-app = Flask(__name__,
-            template_folder="../frontend/templates",
-            static_folder="../frontend/static")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+app = Flask(
+    __name__,
+    template_folder=os.path.join(BASE_DIR, "../frontend/templates"),
+    static_folder=os.path.join(BASE_DIR, "../frontend/static")
+)
 
 app.secret_key = os.environ.get("SECRET_KEY", "dev_key")
 
@@ -719,4 +723,5 @@ def asignar_docente_curso():
 
 if __name__ == "__main__":
     crear_tablas()
-    app.run(debug=True)
+    crear_admin()
+    app.run()
