@@ -2,47 +2,52 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - SIGA</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body class="login-body">
 
-<div class="login-wrapper">
-
-    <!-- LADO IZQUIERDO (branding) -->
-    <div class="login-left">
-        <img src="{{ url_for('static', filename='assets/buho.jpeg') }}" class="login-mascota">
+<main class="login-wrapper">
+    <section class="login-left">
+        <img src="{{ url_for('static', filename='assets/buho.jpeg') }}" class="login-mascota" alt="Mascota SIGA">
         <h1>Bienvenido a SIGA</h1>
         <p>Sistema de Gestión Académica</p>
-    </div>
+    </section>
 
-    <!-- LADO DERECHO (formulario) -->
-    <div class="login-container">
-        <h2>Iniciar Sesión</h2>
+    <section class="login-container">
+        <h2>Iniciar sesión</h2>
 
-        <form method="POST" action="/login">
-            <div class="input-group">
-                <input type="text" name="dni" required>
-                <label>Usuario</label>
-            </div>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="alert-stack">
+                    {% for category, message in messages %}
+                        <p class="alert {{ category }}">{{ message }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
 
-            <div class="input-group">
-                <input type="password" name="password" required>
-                <label>Contraseña</label>
-            </div>
+        <form method="POST" action="{{ url_for('login') }}">
+            <label class="field">
+                <span>Usuario</span>
+                <input type="text" name="dni" autocomplete="username" required>
+            </label>
+
+            <label class="field">
+                <span>Contraseña</span>
+                <input type="password" name="password" autocomplete="current-password" required>
+            </label>
 
             <div class="btn-group">
-                <button type="submit" class="btn-ingresar">Ingresar</button>
-                <button type="button" class="btn-salir" onclick="window.location.href='/'">
-                    Salir
-                </button>
+                <button type="submit" class="btn btn-primary">Ingresar</button>
+                <a href="{{ url_for('index') }}" class="btn btn-secondary">Salir</a>
             </div>
         </form>
 
         <p class="footer-text">© 2026 I.E. Apóstol San Pedro</p>
-    </div>
-
-</div>
+    </section>
+</main>
 
 </body>
 </html>

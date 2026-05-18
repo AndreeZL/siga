@@ -2,7 +2,8 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>I.E. Apóstol San Pedro - Sistema Académico</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>I.E. Apóstol San Pedro - SIGA</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
@@ -10,73 +11,75 @@
 <header class="header">
     <div class="container header-content">
         <div class="logo-box">
-            <img src="{{ url_for('static', filename='assets/logo.jpeg') }}">
+            <img src="{{ url_for('static', filename='assets/logo.jpeg') }}" alt="Logo I.E. Apóstol San Pedro">
             <div>
                 <h1>I.E. Apóstol San Pedro</h1>
                 <span>Sistema de Gestión Académica</span>
             </div>
         </div>
 
-        <a href="/login" class="btn-login">Ingresar</a>
+        <a href="{{ url_for('login') }}" class="btn btn-light">Ingresar</a>
     </div>
 </header>
 
-<section class="hero">
-    <div class="container hero-content">
-        <div class="hero-text">
-            <h2>Gestiona las calificaciones de forma inteligente</h2>
-            <p>
-                Control total, acceso inmediato y comunicación eficiente entre docentes,
-                estudiantes y padres.
-            </p>
+<main>
+    <section class="hero">
+        <div class="container hero-content">
+            <div class="hero-text">
+                <p class="eyebrow">SIGA</p>
+                <h2>Gestión académica clara para docentes y estudiantes</h2>
+                <p>
+                    Registro de cursos, asignación docente y consulta de calificaciones
+                    desde una sola plataforma.
+                </p>
+                <a href="{{ url_for('login') }}" class="btn btn-primary">Ingresar al sistema</a>
+            </div>
 
-            <a href="/login" class="btn-main">Ingresar al sistema</a>
+            <div class="hero-image">
+                <img src="{{ url_for('static', filename='assets/buho.jpeg') }}" alt="Mascota institucional">
+            </div>
         </div>
-    </div>
-</section>
+    </section>
 
-<section class="features container">
-    <div class="card">
-        <h3>📊 Registro eficiente</h3>
-        <p>Ingreso de notas rápido y sin errores.</p>
-    </div>
+    <section class="features container">
+        <article class="card">
+            <h3>Registro eficiente</h3>
+            <p>Los docentes ingresan notas por curso y bimestre con validación inmediata.</p>
+        </article>
 
-    <div class="card">
-        <h3>⚡ Acceso inmediato</h3>
-        <p>Consulta de calificaciones en tiempo real.</p>
-    </div>
+        <article class="card">
+            <h3>Acceso por rol</h3>
+            <p>Administradores, docentes y estudiantes ven solo lo que corresponde a su perfil.</p>
+        </article>
 
-    <div class="card">
-        <h3>📢 Comunicación clara</h3>
-        <p>Información accesible para toda la comunidad.</p>
-    </div>
-</section>
+        <article class="card">
+            <h3>Información centralizada</h3>
+            <p>Grados, áreas, subáreas y usuarios conectados con PostgreSQL.</p>
+        </article>
+    </section>
 
-<section class="about container">
-    <h2 class="section-title">Nuestra Institución</h2>
+    <section class="about container">
+        <h2 class="section-title">Nuestra institución</h2>
 
-    <div class="about-content">
+        <div class="about-content">
+            <article class="about-card">
+                <h3>Misión</h3>
+                <p>
+                    Formamos estudiantes líderes, con sólidos valores, capaces de consolidar su
+                    identidad y autoestima, promoviendo una vida saludable y el pensamiento crítico.
+                </p>
+            </article>
 
-        <div class="about-card">
-            <h3>🎯 Misión</h3>
-            <p>
-                Formamos estudiantes líderes, con sólidos valores, capaces de consolidar su identidad y autoestima, 
-                promoviendo una vida saludable y el pensamiento crítico, en concordancia con los valores científicos y 
-                tecnológicos, mediante la investigación que exige el mundo globalizado.
-            </p>
+            <article class="about-card">
+                <h3>Visión</h3>
+                <p>
+                    Al 2029, aspiramos a ser una institución educativa líder, reconocida por su
+                    excelencia académica y su formación basada en valores.
+                </p>
+            </article>
         </div>
-
-        <div class="about-card">
-            <h3>🌟 Visión</h3>
-            <p>
-                Al 2029, aspiramos a ser una institución educativa líder, reconocida por su excelencia académica,
-                basada en valores y en fortalecimiento de hábitos de una vida saludable, que prepare a sus estudiantes
-                para afrontar con éxito los retos de una sociedad competitiva y en constante cambio.
-            </p>
-        </div>
-
-    </div>
-</section>
+    </section>
+</main>
 
 <footer>
     <p>© 2026 SIGA - I.E. Apóstol San Pedro</p>

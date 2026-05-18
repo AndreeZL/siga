@@ -2,73 +2,62 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Estudiante - SIGA</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-
 <body>
 
 <header class="header">
     <div class="container header-content">
-
         <div>
-            <h1>Mis Notas</h1>
+            <h1>Mis notas</h1>
             <span class="grado-text">
-                {{ grado[0] if grado else "Sin grado" }}
+                {% if grado %}{{ grado[0] }} - {{ grado[1] }}{% else %}Sin grado asignado{% endif %}
             </span>
         </div>
 
-        <div class="header-actions">
-            <a href="/logout" class="btn-login">Cerrar sesión</a>
-        </div>
-
+        <a href="{{ url_for('logout') }}" class="btn btn-light">Cerrar sesión</a>
     </div>
 </header>
 
-<div class="container">
-
-    <div class="table-card">
-
-        <table>
-            <thead>
-                <tr>
-                    <th>Curso</th>
-                    <th>B1</th>
-                    <th>B2</th>
-                    <th>B3</th>
-                    <th>B4</th>
-                    <th>Promedio</th>
-                </tr>
-            </thead>
-
-            <tbody>
-                {% for c in cursos %}
-                <tr>
-                    <td>{{ c[0] }}</td>
-                    <td>{{ c[1] }}</td>
-                    <td>{{ c[2] }}</td>
-                    <td>{{ c[3] }}</td>
-                    <td>{{ c[4] }}</td>
-                    <td class="promedio 
+<main class="container dashboard">
+    <section class="table-card">
+        {% if cursos %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Curso</th>
+                        <th>B1</th>
+                        <th>B2</th>
+                        <th>B3</th>
+                        <th>B4</th>
+                        <th>Promedio</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in cursos %}
                         {% set promedio = (c[1] + c[2] + c[3] + c[4]) / 4 %}
-                        {% if promedio >= 14 %}
-                            aprobado
-                        {% elif promedio >= 11 %}
-                            regular
-                        {% else %}
-                            desaprobado
-                        {% endif %}
-                    ">
-                        {{ promedio | round(2) }}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-
-    </div>
-
-</div>
+                        <tr>
+                            <td>{{ c[0] }}</td>
+                            <td>{{ c[1] }}</td>
+                            <td>{{ c[2] }}</td>
+                            <td>{{ c[3] }}</td>
+                            <td>{{ c[4] }}</td>
+                            <td>
+                                <span class="promedio {% if promedio >= 14 %}aprobado{% elif promedio >= 11 %}regular{% else %}desaprobado{% endif %}">
+                                    {{ promedio | round(2) }}
+                                </span>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="empty-state">Aún no hay cursos o notas disponibles.</div>
+        {% endif %}
+    </section>
+</main>
 
 </body>
 </html>

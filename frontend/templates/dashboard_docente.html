@@ -2,89 +2,221 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Docente - SIGA</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-
 <body>
 
 <header class="header">
     <div class="container header-content">
-        <h1>Panel Docente</h1>
-        <a href="/logout" class="btn-login">Cerrar sesión</a>
+        <div>
+            <h1>Panel docente</h1>
+            <span>Registro de notas bimestrales</span>
+        </div>
+        <a href="{{ url_for('logout') }}" class="btn btn-light">Cerrar sesión</a>
     </div>
 </header>
 
-<div class="container dashboard-docente">
-
-    <!-- CURSOS -->
-    <div class="sidebar-cursos">
-        <h2>Mis cursos</h2>
-
-        {% for c in cursos %}
-            <div class="curso-item"
-                 onclick="cargarEstudiantes('{{ c[3] }}', '{{ c[4] }}', this)">
-                📘 {{ c[1] }} - {{ c[2] }}
-            </div>
-        {% endfor %}
-    </div>
-
-    <!-- ESTUDIANTES -->
-    <div class="panel-estudiantes">
-        <h2>Estudiantes</h2>
-
-        <div id="estudiantes-box">
-            <p>Selecciona un curso para ver estudiantes</p>
+<main class="container dashboard-docente">
+    <section class="panel-estudiantes docente-panel">
+        <div class="section-heading">
+            <h2>Seleccionar curso</h2>
+            <p>Elige un grado y luego una subárea para cargar a tus estudiantes.</p>
         </div>
-    </div>
 
-</div>
+        {% if cursos %}
+            <div class="docente-filter-grid">
+                <label class="field">
+                    <span>Grado</span>
+                    <select id="grado-select">
+                        <option value="">Seleccionar grado</option>
+                    </select>
+                </label>
 
+                <label class="field">
+                    <span>Subárea</span>
+                    <select id="subarea-select" disabled>
+                        <option value="">Seleccionar subárea</option>
+                    </select>
+                </label>
+            </div>
+
+            <div id="cursos-data" hidden>
+                {% for curso in cursos %}
+                    <span
+                        data-grado-id="{{ curso.grado_id }}"
+                        data-grado="{{ curso.grado }}"
+                        data-nivel="{{ curso.nivel }}"
+                        data-subarea-id="{{ curso.subarea_id }}"
+                        data-subarea="{{ curso.subarea }}">
+                    </span>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">Aún no tienes cursos asignados.</div>
+        {% endif %}
+    </section>
+
+    <section class="panel-estudiantes">
+        <div class="section-heading">
+            <h2>Estudiantes</h2>
+            <p id="panel-subtitle">Selecciona grado y subárea para cargar la lista.</p>
+        </div>
+
+        <div id="estudiantes-box" class="empty-state">
+            Selecciona un grado y una subárea para ver estudiantes.
+        </div>
+    </section>
+</main>
+
+{% if cursos %}
 <script>
-    function cargarEstudiantes(grado_id, subarea_id, elemento) {
+    const cursos = Array.from(document.querySelectorAll("#cursos-data span")).map(item => ({
+        grado_id: item.dataset.gradoId,
+        grado: item.dataset.grado,
+        nivel: item.dataset.nivel,
+        subarea_id: item.dataset.subareaId,
+        subarea: item.dataset.subarea
+    }));
+    const gradoSelect = document.getElementById("grado-select");
+    const subareaSelect = document.getElementById("subarea-select");
+    const panelSubtitle = document.getElementById("panel-subtitle");
+    const estudiantesBox = document.getElementById("estudiantes-box");
 
-        document.querySelectorAll(".curso-item").forEach(e => {
-            e.classList.remove("active");
+    function escapeHtml(value) {
+        return String(value)
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+    }
+
+    function normalizarCursos() {
+        const gradosMap = new Map();
+
+        cursos.forEach(curso => {
+            const gradoId = String(curso.grado_id);
+            if (!gradosMap.has(gradoId)) {
+                gradosMap.set(gradoId, {
+                    gradoId,
+                    grado: curso.grado,
+                    nivel: curso.nivel,
+                    subareas: []
+                });
+            }
+
+            gradosMap.get(gradoId).subareas.push({
+                subareaId: String(curso.subarea_id),
+                subarea: curso.subarea
+            });
         });
 
-        elemento.classList.add("active");
+        return Array.from(gradosMap.values());
+    }
 
-        fetch(`/docente/curso/${grado_id}/${subarea_id}`)
-            .then(res => res.json())
+    const gradosDisponibles = normalizarCursos();
+
+    function cargarGrados() {
+        gradosDisponibles.forEach(item => {
+            const option = document.createElement("option");
+            option.value = item.gradoId;
+            option.textContent = `${item.grado} - ${item.nivel}`;
+            gradoSelect.appendChild(option);
+        });
+    }
+
+    function resetSubareas() {
+        subareaSelect.innerHTML = '<option value="">Seleccionar subárea</option>';
+        subareaSelect.disabled = true;
+    }
+
+    function resetEstudiantes() {
+        estudiantesBox.className = "empty-state";
+        estudiantesBox.innerHTML = "Selecciona un grado y una subárea para ver estudiantes.";
+        panelSubtitle.innerText = "Selecciona grado y subárea para cargar la lista.";
+    }
+
+    function cargarSubareas() {
+        const gradoId = gradoSelect.value;
+        resetSubareas();
+        resetEstudiantes();
+
+        if (!gradoId) {
+            return;
+        }
+
+        const grado = gradosDisponibles.find(item => item.gradoId === gradoId);
+        if (!grado) {
+            return;
+        }
+
+        grado.subareas.forEach(item => {
+            const option = document.createElement("option");
+            option.value = item.subareaId;
+            option.textContent = item.subarea;
+            subareaSelect.appendChild(option);
+        });
+
+        subareaSelect.disabled = false;
+    }
+
+    function cargarEstudiantes() {
+        const gradoId = gradoSelect.value;
+        const subareaId = subareaSelect.value;
+
+        if (!gradoId || !subareaId) {
+            resetEstudiantes();
+            return;
+        }
+
+        const grado = gradosDisponibles.find(item => item.gradoId === gradoId);
+        const subarea = grado?.subareas.find(item => item.subareaId === subareaId);
+        panelSubtitle.innerText = `${grado.grado} - ${grado.nivel} / ${subarea.subarea}`;
+
+        fetch(`/docente/curso/${gradoId}/${subareaId}`)
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error("No se pudo cargar la lista de estudiantes.");
+                }
+                return res.json();
+            })
             .then(data => {
-
-                const box = document.getElementById("estudiantes-box");
-
                 if (!data.estudiantes.length) {
-                    box.innerHTML = "<p>No hay estudiantes</p>";
+                    estudiantesBox.className = "empty-state";
+                    estudiantesBox.innerHTML = "No hay estudiantes registrados en este grado.";
                     return;
                 }
 
                 let html = `
-                    <table class="tabla-estudiantes">
-                        <tr>
-                            <th>Estudiante</th>
-                            <th>B1</th>
-                            <th>B2</th>
-                            <th>B3</th>
-                            <th>B4</th>
-                            <th>Acción</th>
-                        </tr>
+                    <div class="table-card compact-table">
+                        <table class="tabla-estudiantes">
+                            <thead>
+                                <tr>
+                                    <th>Estudiante</th>
+                                    <th>DNI</th>
+                                    <th>B1</th>
+                                    <th>B2</th>
+                                    <th>B3</th>
+                                    <th>B4</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
                 `;
 
-                data.estudiantes.forEach(e => {
-
+                data.estudiantes.forEach(estudiante => {
                     html += `
                         <tr>
-                            <td>${e[1]} ${e[2]}</td>
-
-                            <td><input type="number" min="0" max="20" value="${e[4]}" id="b1-${e[0]}"></td>
-                            <td><input type="number" min="0" max="20" value="${e[5]}" id="b2-${e[0]}"></td>
-                            <td><input type="number" min="0" max="20" value="${e[6]}" id="b3-${e[0]}"></td>
-                            <td><input type="number" min="0" max="20" value="${e[7]}" id="b4-${e[0]}"></td>
-
+                            <td>${escapeHtml(estudiante[1])} ${escapeHtml(estudiante[2])}</td>
+                            <td>${escapeHtml(estudiante[3])}</td>
+                            <td><input type="number" min="0" max="20" value="${estudiante[4]}" id="b1-${estudiante[0]}"></td>
+                            <td><input type="number" min="0" max="20" value="${estudiante[5]}" id="b2-${estudiante[0]}"></td>
+                            <td><input type="number" min="0" max="20" value="${estudiante[6]}" id="b3-${estudiante[0]}"></td>
+                            <td><input type="number" min="0" max="20" value="${estudiante[7]}" id="b4-${estudiante[0]}"></td>
                             <td>
-                                <button onclick="guardarNotas(${e[0]}, ${grado_id}, ${subarea_id})">
+                                <button class="btn btn-compact" onclick="guardarNotas(${estudiante[0]}, ${gradoId}, ${subareaId})">
                                     Guardar
                                 </button>
                             </td>
@@ -92,72 +224,55 @@
                     `;
                 });
 
-                html += "</table>";
-
-                box.innerHTML = html;
-            });
-        }
-    
-    function guardarNotas(estudiante_id, grado_id, subarea_id) {
-    
-        const b1 = document.getElementById(`b1-${estudiante_id}`).value;
-        const b2 = document.getElementById(`b2-${estudiante_id}`).value;
-        const b3 = document.getElementById(`b3-${estudiante_id}`).value;
-        const b4 = document.getElementById(`b4-${estudiante_id}`).value;
-    
-        fetch("/docente/guardar_notas", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                estudiante_id,
-                grado_id,
-                subarea_id,
-                b1, b2, b3, b4
+                html += "</tbody></table></div>";
+                estudiantesBox.className = "";
+                estudiantesBox.innerHTML = html;
             })
+            .catch(error => mostrarAlerta(error.message, "error"));
+    }
+
+    function guardarNotas(estudianteId, gradoId, subareaId) {
+        const body = {
+            estudiante_id: estudianteId,
+            grado_id: gradoId,
+            subarea_id: subareaId,
+            b1: document.getElementById(`b1-${estudianteId}`).value,
+            b2: document.getElementById(`b2-${estudianteId}`).value,
+            b3: document.getElementById(`b3-${estudianteId}`).value,
+            b4: document.getElementById(`b4-${estudianteId}`).value
+        };
+
+        fetch("{{ url_for('guardar_notas') }}", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body)
         })
-        .then(res => res.json())
-        .then(data => {
-            if (data.ok) {
+            .then(res => res.json().then(data => ({ ok: res.ok, data })))
+            .then(({ ok, data }) => {
+                if (!ok) {
+                    mostrarAlerta(data.error || "No se pudieron guardar las notas.", "error");
+                    return;
+                }
                 mostrarAlerta(data.message, "success");
-            } else {
-                mostrarAlerta(data.message || "Error", "error");
-            }
-        });
+            })
+            .catch(() => mostrarAlerta("No se pudieron guardar las notas.", "error"));
     }
 
     function mostrarAlerta(mensaje, tipo) {
+        const alerta = document.createElement("div");
+        alerta.className = `toast ${tipo}`;
+        alerta.innerText = mensaje;
+        document.body.appendChild(alerta);
 
-        const color = tipo === "success" ? "#22c55e" : "#ef4444";
-
-        const div = document.createElement("div");
-        div.innerText = mensaje;
-
-        div.style.position = "fixed";
-        div.style.top = "20px";
-        div.style.right = "20px";
-        div.style.padding = "12px 20px";
-        div.style.background = color;
-        div.style.color = "white";
-        div.style.borderRadius = "10px";
-        div.style.boxShadow = "0 10px 25px rgba(0,0,0,0.2)";
-        div.style.zIndex = "9999";
-        div.style.fontWeight = "bold";
-        div.style.transition = "0.3s";
-
-        document.body.appendChild(div);
-
-        setTimeout(() => {
-            div.style.opacity = "0";
-            div.style.transform = "translateY(-10px)";
-        }, 1500);
-
-        setTimeout(() => {
-            div.remove();
-        }, 2000);
+        setTimeout(() => alerta.classList.add("hide"), 1800);
+        setTimeout(() => alerta.remove(), 2300);
     }
+
+    gradoSelect.addEventListener("change", cargarSubareas);
+    subareaSelect.addEventListener("change", cargarEstudiantes);
+    cargarGrados();
 </script>
+{% endif %}
 
 </body>
 </html>
